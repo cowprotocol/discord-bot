@@ -35,6 +35,6 @@ jobs:
       - name: Push image
         uses: docker/build-push-action@v3
         with:
-          push: true
           context: .
-          tags: ahhda/robot-cow-bot
+          push: true
+          tags: ghcr.io/ahhda/robot-cow-bot:latest
