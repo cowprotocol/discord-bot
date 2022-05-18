@@ -2,8 +2,23 @@
 
 Discord BOT
 
-- [PROD bot invite](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot)
-- [TEST bot invite](https://discord.com/api/oauth2/authorize?client_id=976075945293266984&permissions=2147560448&scope=bot)
+
+## Active bots
+
+### PROD
+
+This is the bot active on [CowSwap's Discord server](chat.cowswap.exchange)
+
+Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot) to add it to a Discord server.
+
+
+### TEST
+
+This is a test bot where new features should be deployed first before hitting production.
+
+Currently running on a private test server named `Robot Cow testing grounds`. [Here's a server invite](https://discord.gg/8t94Zwgm) (which has an expiration date, so you more likely to find it via the search)
+
+Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=976075945293266984&permissions=2147560448&scope=bot) to add it to a Discord server.
 
 ## Creating the bot 
 
