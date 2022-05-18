@@ -44,7 +44,10 @@ docker run --env BOT_TOKEN='the bot token' -d robot-cow-bot
 To see the logs
 
 ```bash
-docker logs $(docker ps)
+# get the running CONTAINER ID
+docker ps
+
+docker logs <CONTAINER ID>
 ```
 
 ### With Heroku
