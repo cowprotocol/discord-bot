@@ -2,7 +2,6 @@
 
 Discord BOT
 
-
 ## Active bots
 
 ### PROD
@@ -10,7 +9,6 @@ Discord BOT
 This is the bot active on [CowSwap's Discord server](chat.cowswap.exchange)
 
 Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot) to add it to a Discord server.
-
 
 ### TEST
 
@@ -20,7 +18,7 @@ Currently running on a private test server named `Robot Cow testing grounds`. [H
 
 Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=976075945293266984&permissions=2147560448&scope=bot) to add it to a Discord server.
 
-## Creating the bot 
+## Creating the bot
 
 Out of the scope of this README, but in summary [something like this](https://www.writebots.com/discord-bot-token/) can show you the way.
 
