@@ -1,5 +1,8 @@
 const { Client, Intents, DMChannel, MessageEmbed } = require('discord.js')
 const cowsay = require('cowsay')
+const dotenv = require('dotenv')
+
+dotenv.config()
 
 const client = new Client({
   intents: [

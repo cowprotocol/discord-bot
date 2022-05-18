@@ -2,20 +2,61 @@
 
 Discord BOT
 
-[Invite it to your server](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot)
+## Active bots
 
-## Required env vars
+### PROD
 
-**BOT_TOKEN**: Discord bot token
+This is the bot active on [CowSwap's Discord server](chat.cowswap.exchange)
+
+Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot) to add it to a Discord server.
+
+### TEST
+
+This is a test bot where new features should be deployed first before hitting production.
+
+Currently running on a private test server named `Robot Cow testing grounds`. [Here's a server invite](https://discord.gg/8t94Zwgm) (which has an expiration date, so you more likely to find it via the search)
+
+Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=976075945293266984&permissions=2147560448&scope=bot) to add it to a Discord server.
+
+## Creating the bot
+
+Out of the scope of this README, but in summary [something like this](https://www.writebots.com/discord-bot-token/) can show you the way.
+
+## Setting up
+
+1. Copy `.env.example` to `.env`.
+2. Fill in the bot token you got when creating the bot in the previous step
 
 ## Running
 
+### With Node
+
 `yarn start`
 
-Alternatively, to test it will not fail on Heroku, install `heroku` cli and run:
+### With Docker
+
+```bash
+docker build . -t robot-cow-bot
+docker run -d robot-cow-bot
+```
+
+To see the logs
+
+```bash
+# get the running CONTAINER ID
+docker ps
+
+docker logs <CONTAINER ID>
+```
+
+### With Heroku
+
+Install `heroku` cli and run:
 
 `heroku local`
 
 ## Deploying
 
-Every push to `main` will trigger a build and deploy to Heroku
+### Heroku
+
+⚠️ Deprecated. We are moving to a self hosting solution.
