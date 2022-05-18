@@ -18,14 +18,14 @@ Discord BOT
 ### With Docker
 
 ```bash
-$ docker build . -t robot-cow-bot
-$ docker run --env BOT_TOKEN='the bot token' -d robot-cow-bot
+docker build . -t robot-cow-bot
+docker run --env BOT_TOKEN='the bot token' -d robot-cow-bot
 ```
 
 To see the logs
 
 ```bash
-$ docker logs $(docker ps)
+docker logs $(docker ps)
 ```
 
 ### With Heroku
