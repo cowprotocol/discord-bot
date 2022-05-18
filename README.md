@@ -22,9 +22,10 @@ Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=9760759
 
 Out of the scope of this README, but in summary [something like this](https://www.writebots.com/discord-bot-token/) can show you the way.
 
-## Required env vars
+## Setting up
 
-**BOT_TOKEN**: Discord bot token
+1. Copy `.env.example` to `.env`.
+2. Fill in the bot token you got when creating the bot in the previous step
 
 ## Running
 
@@ -36,7 +37,7 @@ Out of the scope of this README, but in summary [something like this](https://ww
 
 ```bash
 docker build . -t robot-cow-bot
-docker run --env BOT_TOKEN='the bot token' -d robot-cow-bot
+docker run -d robot-cow-bot
 ```
 
 To see the logs
