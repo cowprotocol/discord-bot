@@ -26,7 +26,10 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/robot-cow-bot:latest
+          tags: ghcr.io/${{ github.repository }}:latest
 
       - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: |
+          echo "🎉 You can now pull this image using the below commands:"
+          echo "docker pull ghcr.io/${{ github.repository }}@${{ steps.docker_build.outputs.digest }}"
+          echo "docker pull ghcr.io/${{ github.repository }}:latest"
