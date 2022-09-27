@@ -16,7 +16,7 @@
     "npm": "*"
   },
   "scripts": {
-    "test": "echo 'fuck off' && exit",
-    "start": "node index.js"
+    "test": "echo 'there are no tests' && exit",
+    "start": "node src/index.js"
   }
 }

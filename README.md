@@ -37,7 +37,7 @@ Out of the scope of this README, but in summary [something like this](https://ww
 
 ```bash
 docker build . -t robot-cow-bot
-docker run -d robot-cow-bot
+docker run -d --env-file .env robot-cow-bot
 ```
 
 To see the logs
