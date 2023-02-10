@@ -188,7 +188,7 @@ client.on('messageCreate', async (message) => {
       )
     } else if (howToSwap.test(message.content)) {
       await message.reply(
-        "Go to https://cowswap.exchange/#/profile and click on `Convert to COW`.\nKeep in mind you'll only see the button if you have vested vCOW tokens.",
+        "Go to https://swap.cow.fi/#/profile and click on `Convert to COW`.\nKeep in mind you'll only see the button if you have vested vCOW tokens.",
       )
     }
   } catch (e) {
