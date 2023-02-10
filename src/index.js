@@ -35,8 +35,8 @@ const sellToken = /.*(where|how|wh?en).*(sell).*/i
 const tokenPrice = /.*(what)?.*(token)? price.*/i
 const wenMoon = /.*(wh?en|where).*mo+n.*/i
 const wenLambo = /.*(wh?en|where).*lambo.*/i
+const wenNetwork = /.*wh?en\s+(poly|binance|bnb|arbi|avalanche).*/i
 const meaningOfLife = /.*meaning of life.*/i
-const wenBinance = /.*wh?en binance.*/i
 const contractAddress = /.*(contract|token) .*address.*/i
 const totalSupply = /.*(total|max|maximum|token) supply.*/i
 const addGChain = /.*add (gchain|gnosis ?chain|xdai)( to (mm|metamask|mmask|wallet))?.*/i
@@ -170,7 +170,7 @@ client.on('messageCreate', async (message) => {
       await message.reply(pickLambo())
     } else if (meaningOfLife.test(message.content)) {
       await message.reply(pickMeaningOfLife())
-    } else if (wenBinance.test(message.content)) {
+    } else if (wenNetwork.test(message.content)) {
       await message.reply(pickDunno())
     } else if (wenVote.test(message.content)) {
       await message.reply(
@@ -188,7 +188,7 @@ client.on('messageCreate', async (message) => {
       )
     } else if (howToSwap.test(message.content)) {
       await message.reply(
-        "Go to https://cowswap.exchange/#/profile and click on `Convert to COW`.\nKeep in mind you'll only see the button if you have vested vCOW tokens.",
+        "Go to https://swap.cow.fi/#/profile and click on `Convert to COW`.\nKeep in mind you'll only see the button if you have vested vCOW tokens.",
       )
     }
   } catch (e) {
