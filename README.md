@@ -1,4 +1,4 @@
-# Robot Cow Bot
+# Garden Finance Bot
 
 Discord BOT
 
@@ -6,17 +6,13 @@ Discord BOT
 
 ### PROD
 
-This is the bot active on [CowSwap's Discord server](chat.cowswap.exchange)
+This is the bot active on [Garden's Discord server](https://discord.com/invite/Fp4ZmZZrFu)
 
 Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot) to add it to a Discord server.
 
 ### TEST
 
-This is a test bot where new features should be deployed first before hitting production.
-
-Currently running on a private test server named `Robot Cow testing grounds`. [Here's a server invite](https://discord.gg/8t94Zwgm) (which has an expiration date, so you more likely to find it via the search)
-
-Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=976075945293266984&permissions=2147560448&scope=bot) to add it to a Discord server.
+to be added
 
 ## Creating the bot
 
@@ -49,14 +45,3 @@ docker ps
 docker logs <CONTAINER ID>
 ```
 
-### With Heroku
-
-Install `heroku` cli and run:
-
-`heroku local`
-
-## Deploying
-
-### Heroku
-
-⚠️ Deprecated. We are moving to a self hosting solution.

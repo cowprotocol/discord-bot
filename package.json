@@ -1,14 +1,14 @@
 {
   "name": "robot-cow-bot",
   "version": "0.0.0",
-  "description": "Robot Cow Discord bot",
+  "description": "Garden Finance Discord bot",
   "main": "index.js",
-  "author": "alfetopito",
+  "author": "asnogordo",
   "license": "MIT",
   "private": false,
   "dependencies": {
     "cowsay": "^1.5.0",
-    "discord.js": "^13.3.1",
+    "discord.js": "^14.14.1",
     "dotenv": "^16.0.1"
   },
   "engines": {
