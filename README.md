@@ -11,8 +11,8 @@ This is the bot active on [Garden's Discord server](https://discord.com/invite/F
 Use this [bot invite](https://discord.com/api/oauth2/authorize?client_id=913903801033981952&permissions=2147560448&scope=bot) to add it to a Discord server.
 
 ### TEST
+This is a test bot where new features should be deployed first before hitting production.
 
-to be added
 
 ## Creating the bot
 
@@ -32,8 +32,8 @@ Out of the scope of this README, but in summary [something like this](https://ww
 ### With Docker
 
 ```bash
-docker build . -t robot-cow-bot
-docker run -d --env-file .env robot-cow-bot
+docker build . -t garden-bot
+docker run -d --env-file .env garden-bot
 ```
 
 To see the logs
