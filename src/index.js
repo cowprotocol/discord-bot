@@ -19,6 +19,16 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
 
+client.on('messageCreate', message => {
+  if (message.content === '!ping') {
+    message.channel.send('Pong!');
+  }
+});
+
+client.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
+  console.error('Failed to login:', err);
+});
+
 const noGmAllowed = /^(gn|gm)(\s+|$)/i
 const noHello = /^(hi+|hey|hello|h?ola)!?\s*$/i
 const secretChannel = /^!join$/
@@ -37,6 +47,7 @@ const contractAddress = /.*(contract|token) .*address.*/i
 const totalSupply = /.*(total|max|maximum|token|seed) supply.*/i
 const howToSwap = /.*(how (to )?swap|WBTC to BTC|BTC to WBTC).*/i
 const wenDuneAnalytics = /.*(wh?en|where).*(dune|analytics).*/i
+const wenDude = /.*(wh?en|where).*(dude).*/i
 const wenStake = /.*(wh?en) .*(stake|staking).*/i
 const stakingIssues = /.*(stake|staking).* (reward|received|not working|error|issue|problem).*/i;
 const swapIssues = /.*(swap|swapping|exchange|convert|converting).* (no prompt|can't connect|trouble|not working|error|issue|problem).*/i;
@@ -82,6 +93,13 @@ const workingOnItGifs = [
   'Soon™\nhttps://media1.tenor.com/m/CmogjUfSyckAAAAd/aum-animation-andy-pirki.gif'
 ]
 
+const wenDudeGifs = [
+  'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGl6NTdwemdzNDM0eDVha3I1eXFraWU2ZXVreXQ1MmJlY2Q3MHc0ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J6JDizWgG3bX704JEU/giphy.webphttps://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcWZnaWkyOTQ2aDE3ZWgzejB1bnFhM3JrZGFxdWZtNXpwbmljbDljaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lnDvZtsnWfnnX4T0KA/giphy-downsized-large.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGl6NTdwemdzNDM0eDVha3I1eXFraWU2ZXVreXQ1MmJlY2Q3MHc0ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J6JDizWgG3bX704JEU/giphy-downsized-large.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWdpZ3U3b3pzb3RmOHB4cHpkZ2s0NDczYXdzbmZ5NGpyMmt1bjRjaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bueYrEU0GcwzTKo/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdTR1ZDk2ZGRjNWhidzl2djUxM3U1bG9pODV4NDhsNHFhNXVraTR4ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/hzrvwvnbgIV6E/giphy.gif',
+]
+
 function pickFromList(list) {
   let count = -1
   return () => {
@@ -97,6 +115,7 @@ const pickMoon = pickFromList(wenMoonGifs)
 const pickLambo = pickFromList(wenLamboGifs)
 const pickMeaningOfLife = pickFromList(meaningOfLifeGifs)
 const pickWorkingOnIt = pickFromList(workingOnItGifs)
+const pickDude = pickFromList(wenDudeGifs)
 
 function codeBlock(message) {
   return '```' + message + '```'
@@ -185,7 +204,11 @@ client.on('messageCreate', async (message) => {
       await message.reply(
         "Check out the official dune dashboard 📊 here: <https://dune.com/garden_finance/gardenfinance>"
       )
-    } else if (wenStake.test(message.content)) {
+    } 
+    else if (wenDude.test(message.content)) {
+      await message.reply(pickDude())
+    }
+    else if (wenStake.test(message.content)) {
       await message.reply(
         'SEED Staking is live🌺 at <https://garden.finance/stake/>!\n\nYou can stake in increments of 2,100 SEED for 6 month, 12 month, 24 months, 48 months or permanently.\nYou can also burn 21,000 SEED for an Gardener Pass NFT for maximum voting power.\n\n For more info, and to start staking, visit <https://garden.finance/stake/>.'
       )

@@ -7,9 +7,9 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "cowsay": "^1.5.0",
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.0.1"
+    "cowsay": "^1.6.0",
+    "discord.js": "^14.15.2",
+    "dotenv": "^16.4.5"
   },
   "engines": {
     "node": "*",
