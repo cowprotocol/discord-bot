@@ -13,21 +13,39 @@ const client = new Client({
   ],
 })
 
-client.login(process.env.BOT_TOKEN)
+client.login(process.env.BOT_TOKEN).catch(err => {
+  console.error('Failed to login:', err);
+});
+
+const POLL_INTERVAL = 60000; // Poll every 60 seconds
+const DATA_URL = 'https://staking.garden.finance/stakingStats';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
-})
 
-client.on('messageCreate', message => {
-  if (message.content === '!ping') {
-    message.channel.send('Pong!');
+    // Start polling
+    //pollData();
+    //setInterval(pollData, POLL_INTERVAL);
+
+
+});
+
+async function pollData() {
+  try {
+    const response = await fetch(DATA_URL);
+    const data = await response.json();
+    // Process the totalStaked value
+    const totalStaked = data.data.totalStaked;
+    const totalStakedFormatted = formatNumber(totalStaked / 1e18);
+
+    const channel = client.channels.cache.get('1232151248971497505'); // Replace with your channel ID
+    if (channel) {
+      channel.send(`Total Staked: ${totalStakedFormatted}`);
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
   }
-});
-
-client.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
-  console.error('Failed to login:', err);
-});
+}
 
 const noGmAllowed = /^(gn|gm)(\s+|$)/i
 const noHello = /^(hi+|hey|hello|h?ola)!?\s*$/i
@@ -35,13 +53,29 @@ const secretChannel = /^!join$/
 const noCommands = /^!/
 const noChannelTags = /^\s*\<#\d+\>\s*$/
 
+// Regex patterns for detecting spam
+const userDisplayName = /announcement/i;
+const scamPatterns = [
+  /airdrop is live now/i,
+  /collaborated with opensea/i,
+  /claim as soon as possible/i,
+  /this is an automatically generated announcement message/i,
+  /earn \$?\d+k or more within \d+ hours/i,
+  /you will pay me \d+% of your profit/i,
+  /(only interested people should apply|drop a message|let's get started by asking)/i,
+  /WhatsApp \+\d{1,3} \d{4,}/i,
+  /how to earn|how to make money|make \$\d+k/i,
+  /I\u2019ll teach \d+ people to earn/i,
+];
+
 // auto-replies
+const urlPattern = /https?:\/\/[^\s]+/i;
 const howToClaim = /.*(how) (.*)(claim|airdrop).*/i
 const wenDefillama = /.*(wh?en) .*(defillama|llama).*/i
 const wenVote = /.*(wh?en) .*(vote|voting).*/i
 const wenMoon = /.*(wh?en|where).*mo+n.*/i
 const wenLambo = /.*(wh?en|where).*lambo.*/i
-const wenNetwork = /.*wh?en\s+(optimism|op|binance|bnb|gnosis|avax|avalanche).*/i
+const wenNetwork = /.*wh?en\s+(optimism|op|binance|bnb|gnosis|avax|avalanche|base).*/i
 const meaningOfLife = /.*meaning of life.*/i
 const contractAddress = /.*(contract|token) .*address.*/i
 const totalSupply = /.*(total|max|maximum|token|seed) supply.*/i
@@ -53,6 +87,8 @@ const stakingIssues = /.*(stake|staking).* (reward|received|not working|error|is
 const swapIssues = /.*(swap|swapping|exchange|convert|converting).* (no prompt|can't connect|trouble|not working|error|issue|problem).*/i;
 const claimingIssues = /.*(claim|claiming).* (not work|error|issue|problem|how to).*/i;
 const transactionIssues = /.*(transaction|refund|sent|transfer|overpaid|extra amount).* (issue|problem|error|how|when).*/i;
+
+
 
 const wenMoonGifs = [
   'https://c.tenor.com/YZWhYF-xV4kAAAAd/when-moon-admin.gif',
@@ -143,7 +179,7 @@ const ADDRESSES_EMBEDDED_MSG = new EmbedBuilder ()
       value: `
         - SEED Token: [\`0x86f65121804D2Cdbef79F9f072D4e0c2eEbABC08\`](https://arbiscan.io/token/0x86f65121804d2cdbef79f9f072d4e0c2eebabc08)
         - SEED Staking: [\`0xe2239938ce088148b3ab398b2b77eedfcd9d1afc\`](https://arbiscan.io/address/0xe2239938ce088148b3ab398b2b77eedfcd9d1afc)
-      `
+        - Garden Pass: [\`0x1ab59ae8bb54700b3c2c2cec4db2da26fe825a7d\`](https://arbiscan.io/address/0x1ab59ae8bb54700b3c2c2cec4db2da26fe825a7d)`
     }
   );
 
@@ -165,11 +201,12 @@ client.on('messageCreate', async (message) => {
       return
     }
 
+    await handleScamMessage(message);
+
     if (noCommands.test(message.content)) {
       await message.reply(
         'Not a valid command. I might work on that area of the garden later!',
       )
-
       if (secretChannel.test(message.content)) {
         const dmChannel = await message.author.createDM()
         await dmChannel.send(
@@ -256,3 +293,28 @@ client.on('messageCreate', async (message) => {
     console.error('Something failed handling a message', e)
   }
 })
+
+// Function to check for and handle scam messages
+async function handleScamMessage(message) {
+  const isScamUser = userDisplayName.test(message.member.displayName);
+  const isScamContent = scamPatterns.some(pattern => pattern.test(message.content));
+  const hasMentions = message.mentions.everyone;
+  const hasExternalUrl = urlPattern.test(message.content);
+
+  if (isScamContent) {
+    try {
+      await message.delete();
+      console.log(`Deleted scam message from ${message.author.tag}. `);
+      
+      const warningMessage = `🚨 Potential scam/spam detected from ${message.author}. Planting a 🌱 instead.`;
+      await message.channel.send(warningMessage);
+    } catch (error) {
+      console.error('Failed to delete message or send warning:', error);
+    }
+  }
+}
+
+// Helper function to format numbers with commas
+function formatNumber(num) {
+  return new Intl.NumberFormat().format(num);
+}
