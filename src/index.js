@@ -1,6 +1,9 @@
-const { Client, GatewayIntentBits , DMChannel, EmbedBuilder, MessageType  } = require('discord.js')
-const cowsay = require('cowsay')
-const dotenv = require('dotenv')
+const { Client, GatewayIntentBits , DMChannel, EmbedBuilder, MessageType  } = require('discord.js');
+const cowsay = require('cowsay');
+const dotenv = require('dotenv');
+const axios = require('axios');
+const { Web3,AbiError } = require('web3');
+const POLL_INTERVAL =  120000; // Poll every 120 seconds
 
 dotenv.config()
 
@@ -11,41 +14,189 @@ const client = new Client({
     GatewayIntentBits.DirectMessages,
     GatewayIntentBits.MessageContent
   ],
-})
+});
+
+const ARBISCAN_API_KEY = process.env.ARBISCAN_API_KEY;
+const WEB3_PROVIDER = 'https://arb1.arbitrum.io/rpc'; // Arbitrum RPC URL
+const TOKEN_ADDRESS = '0x86f65121804D2Cdbef79F9f072D4e0c2eEbABC08';
+const STAKING_CONTRACT_ADDRESS = '0xe2239938ce088148b3ab398b2b77eedfcd9d1afc';
+const UNISWAP_POOL_ADDRESS = '0xf9f588394ec5c3b05511368ce016de5fd3812446';
+const UNISWAP_POOL_ABI = [
+  {
+      "inputs": [],
+      "name": "token0",
+      "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+      "stateMutability": "view",
+      "type": "function"
+  }
+];
+const LARGE_SWAP_AMOUNT = 50000
+const LARGE_STAKE_AMOUNT = 21000
+const web3 = new Web3(WEB3_PROVIDER);
+
+const ENVIRONMENT = process.env.ENVIRONMENT;
+const CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_CHANNEL_ID : process.env.TEST_CHANNEL_ID;
+
+//highest block we've checked so far
+let highestCheckedBlock = 0; 
+//Set to store processed transaction hashes
+const processedTransactions = new Set();
 
 client.login(process.env.BOT_TOKEN).catch(err => {
   console.error('Failed to login:', err);
 });
 
-const POLL_INTERVAL = 60000; // Poll every 60 seconds
-const DATA_URL = 'https://staking.garden.finance/stakingStats';
-
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
-
-    // Start polling
-    //pollData();
-    //setInterval(pollData, POLL_INTERVAL);
-
-
+    setInterval(checkTransfers, POLL_INTERVAL);
 });
 
-async function pollData() {
-  try {
-    const response = await fetch(DATA_URL);
-    const data = await response.json();
-    // Process the totalStaked value
-    const totalStaked = data.data.totalStaked;
-    const totalStakedFormatted = formatNumber(totalStaked / 1e18);
+async function checkTransfers() {
+  const currentBlock = await getLatestBlockNumber();
+  if (highestCheckedBlock === 0) {
+      highestCheckedBlock = currentBlock - 1; // Set to the latest block on the first run
+  }
+  if (currentBlock <= highestCheckedBlock) {
+      return;        
+  }
+  const transfers = await getTokenTransfers(highestCheckedBlock, currentBlock);
+  highestCheckedBlock = currentBlock;
+  //Check if any transfer meets the threshold
+  const hasLargeTransfer = transfers.some(transfer => 
+    Number(transfer.value) >= LARGE_STAKE_AMOUNT
+  );
 
-    const channel = client.channels.cache.get('1232151248971497505'); // Replace with your channel ID
-    if (channel) {
-      channel.send(`Total Staked: ${totalStakedFormatted}`);
+  let tokenPrice = null;
+  if (hasLargeTransfer) {
+    tokenPrice = await getTokenPrice();  
+  }
+  for (const transfer of transfers) {
+    const amount = parseFloat(transfer.value) / 1e18;
+    const usdValue = tokenPrice !== null ? amount * tokenPrice : 0;
+    const txHash = transfer.hash;
+    const displayText = `${txHash.substring(0, 6)}...${txHash.substring(txHash.length - 4)}`;
+
+    if (processedTransactions.has(txHash)) {
+      //Skip if the transaction has already been processed
+      console.log(`Transaction ${txHash} has already been processed.`);
+      return;
     }
-  } catch (error) {
-    console.error('Error fetching data:', error);
+    //Add the transaction hash to the set of processed transactions
+    processedTransactions.add(txHash);   
+
+    
+    if (transfer.to.toLowerCase() === STAKING_CONTRACT_ADDRESS.toLowerCase() && amount >= LARGE_STAKE_AMOUNT) {
+      sendAlert(new EmbedBuilder()
+        .setTitle('🌸 Large SEED 🌱 Stake 🌸')
+        .addFields([
+            { name: 'SEED 🌱 Staked', value: amount.toString() },
+            { name: 'USD Value 💵', value: `$${usdValue.toFixed(2)}` },
+            { name: 'Tx Hash', value: `[${displayText}](https://arbiscan.io/tx/${txHash})` }
+        ]), CHANNEL_ID);
+    } else if (amount >= LARGE_SWAP_AMOUNT) { // update this to like 50k after testing
+        const receipt = await getTransactionReceipt(transfer.hash);
+        const isSwap = receipt.logs.some(log => log.address.toLowerCase() === UNISWAP_POOL_ADDRESS.toLowerCase() && log.topics[0] === web3.utils.sha3('Swap(address,address,int256,int256,uint160,uint128,int24)'));
+
+        if (isSwap) {
+            const swapDetails = receipt.logs.find(log => log.address.toLowerCase() === UNISWAP_POOL_ADDRESS.toLowerCase());
+            console.log('Raw swapDetails data:', swapDetails);
+
+            // Ensure the swapDetails data and topics are valid
+            if (swapDetails && swapDetails.data && swapDetails.topics.length > 1) {
+                console.log('swapDetails.address:', swapDetails.address);
+                console.log('swapDetails.topics:', swapDetails.topics);
+                console.log('swapDetails.data:', swapDetails.data);
+
+                try {
+                    // Check data length
+                    if (swapDetails.data.length < 320) {
+                        throw new Error('Log data is shorter than expected for a Swap event');
+                    }
+
+                    // Decode each field manually using BigInt where necessary
+                    const amount0 = BigInt('0x' + swapDetails.data.slice(2, 66));
+                    const amount1 = BigInt('0x' + swapDetails.data.slice(66, 130));
+                    const sqrtPriceX96 = BigInt('0x' + swapDetails.data.slice(130, 194));
+                    const liquidity = BigInt('0x' + swapDetails.data.slice(194, 258));
+                    const tick = parseInt('0x' + swapDetails.data.slice(258, 290), 16);
+
+                    const swapEvent = {
+                        sender: swapDetails.topics[1],
+                        recipient: swapDetails.topics[2],
+                        amount0,
+                        amount1,
+                        sqrtPriceX96,
+                        liquidity,
+                        tick
+                    };
+
+                    console.log('Decoded swapEvent:', swapEvent);
+
+                    // Determine which token is being bought
+                    const token0 = await getToken0Address(UNISWAP_POOL_ADDRESS);
+                    const isSeedBuy = (token0.toLowerCase() === TOKEN_ADDRESS.toLowerCase()) ? 
+                        (swapEvent.amount0 > 0n) : (swapEvent.amount1 > 0n);
+
+                    if (isSeedBuy) {
+                        sendAlert(new EmbedBuilder()
+                            .setTitle('🌸 Large SEED 🌱 Swap 🌸')
+                            .addFields([
+                                { name: 'SEED 🌱 Bought', value: amount.toString() },
+                                { name: 'USD Value 💵', value: `$${usdValue.toFixed(2)}` },
+                                { name: 'Tx Hash', value: `[${displayText}](https://arbiscan.io/tx/${txHash})` }
+                            ])
+                        , CHANNEL_ID);
+                    }
+                } catch (error) {
+                    if (error instanceof AbiError) {
+                        console.error('Error decoding log:', error);
+                        // Handle the error or skip the log
+                    } else {
+                        console.error('Unexpected error:', error);
+                        throw error;
+                    }
+                }
+            } else {
+                console.error('Invalid swapDetails data or topics:', swapDetails);
+            }
+        } else {
+            sendAlert(new EmbedBuilder()
+                .setTitle('🌸 Large SEED 🌱 Transfer 🌸')
+                .addFields([
+                    { name: 'SEED 🌱 Transferred', value: amount.toString() },
+                    { name: 'USD Value 💵', value: `$${usdValue.toFixed(2)}` },
+                    { name: 'Tx Hash', value: `[${displayText}](https://arbiscan.io/tx/${txHash})` }
+                ])
+            , CHANNEL_ID);
+        }
+      }
   }
 }
+
+async function getLatestBlockNumber() {
+  const response = await axios.get(`https://api.arbiscan.io/api?module=proxy&action=eth_blockNumber&apikey=${ARBISCAN_API_KEY}`);
+  return parseInt(response.data.result, 16);
+}
+
+async function getTokenTransfers(startBlock, endBlock) {
+  const response = await axios.get(`https://api.arbiscan.io/api?module=account&action=tokentx&contractaddress=${TOKEN_ADDRESS}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&apikey=${ARBISCAN_API_KEY}`);
+  return response.data.result;
+}
+
+async function getTransactionReceipt(txHash) {
+  return await web3.eth.getTransactionReceipt(txHash);
+}
+async function getToken0Address(poolAddress) {
+  const poolContract = new web3.eth.Contract(UNISWAP_POOL_ABI, poolAddress);
+  return await poolContract.methods.token0().call();
+}
+async function getTokenPrice() {
+  // This is a placeholder. You'd need to replace this with an actual API call to a price feed
+  const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=garden-2&vs_currencies=usd');
+  return response.data['garden-2'].usd;
+}
+
+/* Related to detecting and responding to discord messages */
 
 const noGmAllowed = /^(gn|gm)(\s+|$)/i
 const noHello = /^(hi+|hey|hello|h?ola)!?\s*$/i
@@ -305,16 +456,54 @@ async function handleScamMessage(message) {
     try {
       await message.delete();
       console.log(`Deleted scam message from ${message.author.tag}. `);
-      
-      const warningMessage = `🚨 Potential scam/spam detected from ${message.author}. Planting a 🌱 instead.`;
-      await message.channel.send(warningMessage);
+
+      const joinDate = message.member.joinedAt.toDateString();
+      const displayName = message.member.displayName;
+      const username = message.author.username;
+      const userId = message.author.id;
+      const accountCreatedAt = message.author.createdAt.toDateString();
+      const roles = message.member.roles.cache
+        .filter(role => role.name !== '@everyone')
+        .map(role => role.name)
+        .join(', ');
+      const originalMessage = message.content.trim();
+  
+      // Create an embed with the provided information
+      const warningMessageEmbed = new EmbedBuilder ()
+          .setTitle('🚨 Potential scam/spam detected')
+          .setDescription(`Planting a 🌱 instead.`)
+          .addFields(
+              { name: 'Account Created', value: accountCreatedAt, inline: true },
+              { name: 'Joined Garden Discord', value: joinDate, inline: true },
+              { name: 'Display Name', value: displayName, inline: true },
+              { name: 'Username', value: `[${username}](https://discord.com/users/${userId})`, inline: true },
+              { name: 'Roles', value: roles, inline: true },
+              { name: 'Original Message (click to expand)', value: `||${originalMessage}||` }
+          )
+          .setColor('#FF0000'); // Set the color of the embed
+  
+      // Send the embed message to the same channel
+      await message.channel.send({
+          embeds: [warningMessageEmbed],
+          allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
+      });
     } catch (error) {
       console.error('Failed to delete message or send warning:', error);
     }
   }
 }
 
-// Helper function to format numbers with commas
+// Helper functions 
+
+//to format numbers with commas
 function formatNumber(num) {
   return new Intl.NumberFormat().format(num);
+}
+
+//Send and embedded message to a specific channel
+function sendAlert(embeddedMessage,channelId) {
+  const channel = client.channels.cache.get(channelId);
+  if (channel) {
+      channel.send({ embeds: [embeddedMessage] })
+  }
 }

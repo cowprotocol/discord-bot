@@ -7,10 +7,12 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "axios": "^1.7.2",
     "cowsay": "^1.6.0",
     "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "web3": "^4.10.0"
   },
   "engines": {
     "node": "*",
