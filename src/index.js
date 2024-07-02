@@ -18,24 +18,26 @@ const client = new Client({
 
 const ARBISCAN_API_KEY = process.env.ARBISCAN_API_KEY;
 const WEB3_PROVIDER = 'https://arb1.arbitrum.io/rpc'; // Arbitrum RPC URL
-const TOKEN_ADDRESS = '0x86f65121804D2Cdbef79F9f072D4e0c2eEbABC08';
+const TOKEN_ADDRESS = '0x86f65121804D2Cdbef79F9f072D4e0c2eEbABC08'; //SEED
 const STAKING_CONTRACT_ADDRESS = '0xe2239938ce088148b3ab398b2b77eedfcd9d1afc';
 const UNISWAP_POOL_ADDRESS = '0xf9f588394ec5c3b05511368ce016de5fd3812446';
 const UNISWAP_POOL_ABI = [
   {
       "inputs": [],
-      "name": "token0",
+      "name": "token0",                          
       "outputs": [{"internalType": "address", "name": "", "type": "address"}],
       "stateMutability": "view",
       "type": "function"
   }
 ];
-const LARGE_SWAP_AMOUNT = 50000
+const LARGE_SWAP_AMOUNT = 10000
 const LARGE_STAKE_AMOUNT = 21000
 const web3 = new Web3(WEB3_PROVIDER);
 
 const ENVIRONMENT = process.env.ENVIRONMENT;
 const CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_CHANNEL_ID : process.env.TEST_CHANNEL_ID;
+const SCAM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SCAM_CHANNEL_ID : process.env.TEST_SCAM_CHANNEL_ID;
+const SUPPORT_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SUPPORT_TICKET_CHANNEL_ID : process.env.TEST_SUPPORT_TICKET_CHANNEL_ID;
 
 //highest block we've checked so far
 let highestCheckedBlock = 0; 
@@ -68,7 +70,7 @@ async function checkTransfers() {
 
   let tokenPrice = null;
   if (hasLargeTransfer) {
-    tokenPrice = await getTokenPrice();  
+    tokenPrice = await getSeedTokenPrice();  
   }
   for (const transfer of transfers) {
     const amount = parseFloat(transfer.value) / 1e18;
@@ -132,12 +134,12 @@ async function checkTransfers() {
 
                     console.log('Decoded swapEvent:', swapEvent);
 
-                    // Determine which token is being bought
                     const token0 = await getToken0Address(UNISWAP_POOL_ADDRESS);
-                    const isSeedBuy = (token0.toLowerCase() === TOKEN_ADDRESS.toLowerCase()) ? 
-                        (swapEvent.amount0 > 0n) : (swapEvent.amount1 > 0n);
+                    const isSeedBuy = (token0.toLowerCase() === TOKEN_ADDRESS.toLowerCase());
 
+                    let seedAmount;
                     if (isSeedBuy) {
+                      seedAmount = Number(swapEvent.amount0) / 1e18; // Adjust based on SEED decimals
                         sendAlert(new EmbedBuilder()
                             .setTitle('🌸 Large SEED 🌱 Swap 🌸')
                             .addFields([
@@ -190,8 +192,7 @@ async function getToken0Address(poolAddress) {
   const poolContract = new web3.eth.Contract(UNISWAP_POOL_ABI, poolAddress);
   return await poolContract.methods.token0().call();
 }
-async function getTokenPrice() {
-  // This is a placeholder. You'd need to replace this with an actual API call to a price feed
+async function getSeedTokenPrice() {
   const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=garden-2&vs_currencies=usd');
   return response.data['garden-2'].usd;
 }
@@ -423,22 +424,22 @@ client.on('messageCreate', async (message) => {
         "We are 🌸live🌸 on defillama, check it out!\n<https://defillama.com/protocol/garden>",
       )
     } else if (stakingIssues.test(message.content)) { // Staking Issues
-    await message.reply("If you are having issues with staking, please open a support ticket in <https://discord.com/channels/1230012545155338281/1230384166278008932>");
+    await message.reply(`If you are having issues with staking, please open a support ticket in <#${SUPPORT_CHANNEL_ID}}}>.`);
     }
 
     // Swap Issues
     else if (swapIssues.test(message.content)) {
-      await message.reply("If you're experiencing issues with an in progress swap, please open a support ticket in <https://discord.com/channels/1230012545155338281/1230384166278008932> and include your order ID");
+      await message.reply(`If you're experiencing issues with an in progress swap, please open a support ticket in <#${SUPPORT_CHANNEL_ID}> and include your order ID.`);
     }
 
     // Claiming Issues
     else if (claimingIssues.test(message.content)) {
-      await message.reply("If you are having issues claiming $SEED, please open a support ticket in <https://discord.com/channels/1230012545155338281/1230384166278008932>.");
+      await message.reply(`If you are having issues claiming $SEED, please open a support ticket in <#${SUPPORT_CHANNEL_ID}>.`);
     }
 
     // Transaction and Refund Issues
     else if (transactionIssues.test(message.content)) {
-      await message.reply("If you have questions about a transaction or need help with a refund, please provide your order ID and open a support ticket in <https://discord.com/channels/1230012545155338281/1230384166278008932>");
+      await message.reply(`If you have questions about a transaction or need help with a refund, please provide your order ID and open a support ticket in <#${SUPPORT_CHANNEL_ID}>`);
     }
   } catch (e) {
     console.error('Something failed handling a message', e)
@@ -482,11 +483,15 @@ async function handleScamMessage(message) {
           )
           .setColor('#FF0000'); // Set the color of the embed
   
-      // Send the embed message to the same channel
-      await message.channel.send({
-          embeds: [warningMessageEmbed],
-          allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
-      });
+        const channel = await client.channels.fetch(SCAM_CHANNEL_ID);
+        if (channel) {
+          await channel.send({
+            embeds: [warningMessageEmbed],
+            allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
+          });
+        } else {
+          console.error('Channel not found');
+        }
     } catch (error) {
       console.error('Failed to delete message or send warning:', error);
     }
