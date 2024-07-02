@@ -235,12 +235,10 @@ const howToSwap = /.*(how (to )?swap|WBTC to BTC|BTC to WBTC).*/i
 const wenDuneAnalytics = /.*(wh?en|where).*(dune|analytics).*/i
 const wenDude = /.*(wh?en|where).*(dude).*/i
 const wenStake = /.*(wh?en) .*(stake|staking).*/i
-const stakingIssues = /.*(stake|staking).* (reward|received|not working|error|issue|problem).*/i;
-const swapIssues = /.*(swap|swapping|exchange|convert|converting).* (no prompt|can't connect|trouble|not working|error|issue|problem).*/i;
-const claimingIssues = /.*(claim|claiming).* (not work|error|issue|problem|how to).*/i;
-const transactionIssues = /.*(transaction|refund|sent|transfer|overpaid|extra amount).* (issue|problem|error|how|when).*/i;
-
-
+const stakingIssues = /\b(stake|staking)\b.*\b(reward|received|error|issue|problem)\b(?!.*\b(how|what|when)\b)/i;
+const swapIssues = /\b(swap|swapping|exchange|convert|converting)\b.*\b(no prompt|can't connect|trouble|error|issue|problem)\b(?!.*\b(how|what|when)\b)/i;
+const claimingIssues = /\b(claim|claiming)\b.*\b(not work|error|issue|problem)\b(?!.*\b(when|what)\b)/i;
+const transactionIssues = /\b(transaction|refund|sent|transfer|overpaid)\b.*\b(issue|problem|error|stuck)\b(?!.*\b(how to|what is)\b)/i;
 
 const wenMoonGifs = [
   'https://c.tenor.com/YZWhYF-xV4kAAAAd/when-moon-admin.gif',
@@ -424,7 +422,7 @@ client.on('messageCreate', async (message) => {
         "We are 🌸live🌸 on defillama, check it out!\n<https://defillama.com/protocol/garden>",
       )
     } else if (stakingIssues.test(message.content)) { // Staking Issues
-    await message.reply(`If you are having issues with staking, please open a support ticket in <#${SUPPORT_CHANNEL_ID}}}>.`);
+    await message.reply(`If you are having issues with staking, please open a support ticket in <#${SUPPORT_CHANNEL_ID}>.`);
     }
 
     // Swap Issues
