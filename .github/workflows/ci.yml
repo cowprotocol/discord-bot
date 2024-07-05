@@ -37,7 +37,21 @@ jobs:
 
     - name: Verify SSH Key Length
       run: |
-        echo "${{ secrets.SSH_KEY }}" | wc -c
+        echo "SSH_KEY length: $(echo "${{ secrets.SSH_KEY }}" | wc -c)"
+
+    - name: Verify DEV_HOST
+      run: |
+        echo "DEV_HOST: ${DEV_HOST:0:5}*****"
+
+    - name: Verify USERNAME
+      run: |
+        echo "USERNAME: ${USERNAME:0:3}*****"
+
+    - name: Verify SSH Key
+      run: |
+        echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+        echo "${{ secrets.SSH_KEY }}" | head -n 5
+        echo "-----END OPENSSH PRIVATE KEY-----"
 
     - name: Write SSH Key to File and Check
       run: |
@@ -70,7 +84,21 @@ jobs:
 
     - name: Verify SSH Key Length
       run: |
-        echo "${{ secrets.SSH_KEY }}" | wc -c
+        echo "SSH_KEY length: $(echo "${{ secrets.SSH_KEY }}" | wc -c)"
+
+    - name: Verify PROD_HOST
+      run: |
+        echo "PROD_HOST: ${PROD_HOST:0:5}*****"
+
+    - name: Verify USERNAME
+      run: |
+        echo "USERNAME: ${USERNAME:0:3}*****"
+
+    - name: Verify SSH Key
+      run: |
+        echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+        echo "${{ secrets.SSH_KEY }}" | head -n 5
+        echo "-----END OPENSSH PRIVATE KEY-----"
 
     - name: Write SSH Key to File and Check
       run: |
