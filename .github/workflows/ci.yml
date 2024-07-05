@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Debug SSH Key
-      run: echo "${{ secrets.SSH_KEY }}" | head -c 20
+      run: echo "${{ secrets.SSH_KEY }}"
 
     - name: Deploy to Dev
       uses: appleboy/ssh-action@master
