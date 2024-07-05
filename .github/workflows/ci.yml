@@ -47,11 +47,10 @@ jobs:
       run: |
         echo "USERNAME: ${USERNAME:0:3}*****"
 
-    - name: Verify SSH Key
+    - name: Test Network Connectivity
       run: |
-        echo "-----BEGIN OPENSSH PRIVATE KEY-----"
-        echo "${{ secrets.SSH_KEY }}" | head -n 5
-        echo "-----END OPENSSH PRIVATE KEY-----"
+        ping -c 4 ${{ secrets.DEV_HOST }}
+        nc -zv ${{ secrets.DEV_HOST }} 22
 
     - name: Write SSH Key to File and Check
       run: |
@@ -60,6 +59,10 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ls -l ~/.ssh/id_rsa
         head -n 2 ~/.ssh/id_rsa
+
+    - name: Test SSH Connection
+      run: |
+        ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.DEV_HOST }} echo "SSH connection successful"
 
     - name: Deploy to Dev
       uses: appleboy/ssh-action@master
@@ -94,11 +97,10 @@ jobs:
       run: |
         echo "USERNAME: ${USERNAME:0:3}*****"
 
-    - name: Verify SSH Key
+    - name: Test Network Connectivity
       run: |
-        echo "-----BEGIN OPENSSH PRIVATE KEY-----"
-        echo "${{ secrets.SSH_KEY }}" | head -n 5
-        echo "-----END OPENSSH PRIVATE KEY-----"
+        ping -c 4 ${{ secrets.PROD_HOST }}
+        nc -zv ${{ secrets.PROD_HOST }} 22
 
     - name: Write SSH Key to File and Check
       run: |
@@ -107,6 +109,10 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ls -l ~/.ssh/id_rsa
         head -n 2 ~/.ssh/id_rsa
+
+    - name: Test SSH Connection
+      run: |
+        ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.PROD_HOST }} echo "SSH connection successful"
 
     - name: Deploy to Prod
       uses: appleboy/ssh-action@master
