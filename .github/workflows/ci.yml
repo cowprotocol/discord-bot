@@ -1,14 +1,17 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - development
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -23,3 +26,37 @@ jobs:
 
     - name: Run tests
       run: npm test
+
+  deploy-dev:
+    needs: build
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to Dev
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /home/ubuntu/garden-discord-bot
+          git pull origin development
+          /home/ubuntu/bin/garden_docker_kill.sh
+          /home/ubuntu/bin/garden_docker_start.sh
+
+  deploy-prod:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to Prod
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /home/ubuntu/garden-discord-bot
+          git pull origin master
+          /home/ubuntu/bin/garden_docker_kill.sh
+          /home/ubuntu/bin/garden_docker_start.sh
