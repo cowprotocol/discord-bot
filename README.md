@@ -27,7 +27,7 @@ Out of the scope of this README, but in summary [something like this](https://ww
 
 ### With Node
 
-`yarn start`
+`npm start`
 
 ### With Docker
 
