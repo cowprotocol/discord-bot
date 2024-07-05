@@ -32,6 +32,9 @@ jobs:
     if: github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
     steps:
+    - name: Debug SSH Key
+      run: echo "${{ secrets.SSH_KEY }}" | head -c 20
+
     - name: Deploy to Dev
       uses: appleboy/ssh-action@master
       with:
@@ -50,6 +53,9 @@ jobs:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
+    - name: Debug SSH Key
+      run: echo "${{ secrets.SSH_KEY }}" | head -c 20
+
     - name: Deploy to Prod
       uses: appleboy/ssh-action@master
       with:
@@ -61,3 +67,4 @@ jobs:
           git pull origin master
           /home/ubuntu/bin/garden_docker_kill.sh
           /home/ubuntu/bin/garden_docker_start.sh
+        debug: true
