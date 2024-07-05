@@ -43,6 +43,7 @@ jobs:
           git pull origin development
           /home/ubuntu/bin/garden_docker_kill.sh
           /home/ubuntu/bin/garden_docker_start.sh
+        debug: true
 
   deploy-prod:
     needs: build
