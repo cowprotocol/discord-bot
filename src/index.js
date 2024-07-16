@@ -37,6 +37,7 @@ const web3 = new Web3(WEB3_PROVIDER);
 const ENVIRONMENT = process.env.ENVIRONMENT;
 const CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_CHANNEL_ID : process.env.TEST_CHANNEL_ID;
 const SCAM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SCAM_CHANNEL_ID : process.env.TEST_SCAM_CHANNEL_ID;
+const GM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_GM_CHANNEL_ID : process.env.TEST_GM_CHANNEL_ID;
 const SUPPORT_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SUPPORT_TICKET_CHANNEL_ID : process.env.TEST_SUPPORT_TICKET_CHANNEL_ID;
 
 //highest block we've checked so far
@@ -369,14 +370,14 @@ client.on('messageCreate', async (message) => {
       await message.delete()
     } else if (noGmAllowed.test(message.content) && message.channel.name !== 'gm-gn') {
       await message.reply(
-        'Please plant🌱 your `gm` and `gn` to the #gm channel',
+        'Please plant🌱 your `gm` and `gn` to the <#' + GM_CHANNEL_ID + '> channel',
       )
       await message.delete()
-    } else if (noHello.test(message.content) && message.channel.name !== 'gm-gn') {
+    } else if (noHello.test(message.content) && message.channel.id !== GM_CHANNEL_ID) {
       await message.reply(
         `${helloMsgReply(
           message.content,
-        )} nice to see you fellow Gardener! Next time please plant 🌱 your \`hi\` messages in the #gm-gn channel`,
+        )} nice to see you fellow Gardener! Next time please plant 🌱 your \`hi\` messages in the <#' + GM_CHANNEL_ID + '> channel`,
       )
       await message.delete()
     } else if (wenMoon.test(message.content)) {
