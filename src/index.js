@@ -367,16 +367,16 @@ client.on('messageCreate', async (message) => {
     } else if (noChannelTags.test(message.content)) {
       await message.reply('Please stop tagging channels with no reason')
       await message.delete()
-    } else if (noGmAllowed.test(message.content) && message.channel.name !== 'gm') {
+    } else if (noGmAllowed.test(message.content) && message.channel.name !== 'gm-gn') {
       await message.reply(
         'Please plant🌱 your `gm` and `gn` to the #gm channel',
       )
       await message.delete()
-    } else if (noHello.test(message.content) && message.channel.name !== 'gm') {
+    } else if (noHello.test(message.content) && message.channel.name !== 'gm-gn') {
       await message.reply(
         `${helloMsgReply(
           message.content,
-        )} nice to see you fellow Gardener! Next time please plant 🌱 your \`hi\` messages in the #gm channel`,
+        )} nice to see you fellow Gardener! Next time please plant 🌱 your \`hi\` messages in the #gm-gn channel`,
       )
       await message.delete()
     } else if (wenMoon.test(message.content)) {
