@@ -368,7 +368,7 @@ client.on('messageCreate', async (message) => {
     } else if (noChannelTags.test(message.content)) {
       await message.reply('Please stop tagging channels with no reason')
       await message.delete()
-    } else if (noGmAllowed.test(message.content) && message.channel.name !== 'gm-gn') {
+    } else if (noGmAllowed.test(message.content) && message.channel.id !== GM_CHANNEL_ID) {
       await message.reply(
         'Please plant🌱 your `gm` and `gn` to the <#' + GM_CHANNEL_ID + '> channel',
       )
