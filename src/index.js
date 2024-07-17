@@ -200,11 +200,9 @@ async function getSeedTokenPrice() {
 
 /* Related to detecting and responding to discord messages */
 
-const noGmAllowed = /^(gn|gm)(\s+|$)/i
+const noGmAllowed = /^\s*(gn|gm)\s*$/i;
 const noHello = /^(hi+|hey|hello|h?ola)!?\s*$/i
 const secretChannel = /^!join$/
-const noCommands = /^!/
-const noChannelTags = /^\s*\<#\d+\>\s*$/
 
 // Regex patterns for detecting spam
 const userDisplayName = /announcement/i;
@@ -353,22 +351,7 @@ client.on('messageCreate', async (message) => {
     }
 
     await handleScamMessage(message);
-
-    if (noCommands.test(message.content)) {
-      await message.reply(
-        'Not a valid command. I might work on that area of the garden later!',
-      )
-      if (secretChannel.test(message.content)) {
-        const dmChannel = await message.author.createDM()
-        await dmChannel.send(
-          codeBlock(cowsay.say({ text: 'There is no #garden-level 🤫', p: true })),
-        )
-      }
-      await message.delete()
-    } else if (noChannelTags.test(message.content)) {
-      await message.reply('Please stop tagging channels with no reason')
-      await message.delete()
-    } else if (noGmAllowed.test(message.content) && message.channel.id !== GM_CHANNEL_ID) {
+    if (noGmAllowed.test(message.content) && message.channel.id !== GM_CHANNEL_ID) {
       await message.reply(
         'Please plant🌱 your `gm` and `gn` to the <#' + GM_CHANNEL_ID + '> channel',
       )
