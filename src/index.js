@@ -360,7 +360,7 @@ client.on('messageCreate', async (message) => {
       await message.reply(
         `${helloMsgReply(
           message.content,
-        )} nice to see you fellow Gardener! Next time please plant 🌱 your \`hi\` messages in the <#' + ${GM_CHANNEL_ID} + '> channel`,
+        )} nice to see you fellow Gardener! Next time please plant 🌱 your \`hi\` messages in the <#${GM_CHANNEL_ID}> channel`,
       )
       await message.delete()
     } else if (wenMoon.test(message.content)) {
