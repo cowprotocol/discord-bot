@@ -35,47 +35,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Verify SSH Key Length
-      run: |
-        echo "SSH_KEY length: $(echo "${{ secrets.SSH_KEY }}" | wc -c)"
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    - name: Verify DEV_HOST
-      run: |
-        echo "DEV_HOST: ${DEV_HOST:0:5}*****"
-
-    - name: Verify USERNAME
-      run: |
-        echo "USERNAME: ${USERNAME:0:3}*****"
-
-    - name: Test Network Connectivity
-      run: |
-        ping -c 4 ${{ secrets.DEV_HOST }}
-        nc -zv ${{ secrets.DEV_HOST }} 22
-
-    - name: Write SSH Key to File and Check
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ls -l ~/.ssh/id_rsa
-        head -n 2 ~/.ssh/id_rsa
-
-    - name: Test SSH Connection
-      run: |
-        ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.DEV_HOST }} echo "SSH connection successful"
+    - name: Add known hosts
+      run: ssh-keyscan -H ${{ secrets.DEV_HOST }} >> ~/.ssh/known_hosts
 
     - name: Deploy to Dev
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.DEV_HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        script: |
+      run: |
+        ssh ${{ secrets.USERNAME }}@${{ secrets.DEV_HOST }} << EOF
           cd /home/ubuntu/garden-discord-bot
           git pull origin development
           /home/ubuntu/bin/garden_docker_kill.sh
           /home/ubuntu/bin/garden_docker_start.sh
-        debug: true
+        EOF
 
   deploy-prod:
     needs: build
@@ -85,44 +60,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Verify SSH Key Length
-      run: |
-        echo "SSH_KEY length: $(echo "${{ secrets.SSH_KEY }}" | wc -c)"
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    - name: Verify PROD_HOST
-      run: |
-        echo "PROD_HOST: ${PROD_HOST:0:5}*****"
-
-    - name: Verify USERNAME
-      run: |
-        echo "USERNAME: ${USERNAME:0:3}*****"
-
-    - name: Test Network Connectivity
-      run: |
-        ping -c 4 ${{ secrets.PROD_HOST }}
-        nc -zv ${{ secrets.PROD_HOST }} 22
-
-    - name: Write SSH Key to File and Check
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ls -l ~/.ssh/id_rsa
-        head -n 2 ~/.ssh/id_rsa
-
-    - name: Test SSH Connection
-      run: |
-        ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.PROD_HOST }} echo "SSH connection successful"
+    - name: Add known hosts
+      run: ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
 
     - name: Deploy to Prod
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        script: |
+      run: |
+        ssh ${{ secrets.USERNAME }}@${{ secrets.PROD_HOST }} << EOF
           cd /home/ubuntu/garden-discord-bot
           git pull origin master
           /home/ubuntu/bin/garden_docker_kill.sh
           /home/ubuntu/bin/garden_docker_start.sh
-        debug: true
+        EOF
