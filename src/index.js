@@ -38,6 +38,7 @@ const SCAM_CHANNEL_ID = process.env.SCAM_CHANNEL_ID;
 const GM_CHANNEL_ID = process.env.GM_CHANNEL_ID;
 const SUPPORT_CHANNEL_ID = process.env.SUPPORT_TICKET_CHANNEL_ID;
 const CHANNEL_ID = process.env.BOT_CHANNEL_ID;
+const BASE_ROLE_ID = process.env.BASE_ROLE_ID;
 
 //highest block we've checked so far
 let highestCheckedBlock = 0; 
@@ -216,10 +217,13 @@ const scamPatterns = [
   /WhatsApp \+\d{1,3} \d{4,}/i,
   /how to earn|how to make money|make \$\d+k/i,
   /I\u2019ll teach \d+ people to earn/i,
+  /server representative/i,
+  /support representative/i,
 ];
 
 // auto-replies
 const urlPattern = /https?:\/\/[^\s]+/i;
+const internalUrl = /(?<!https?:\/\/)(?:www\.)?(discord\.(?:com|gg)|discord(?:app)?\.com)(\S*)/i // look for discord.gg or discord.com without the https:// or http://
 const howToClaim = /.*(how) (.*)(claim|airdrop).*/i
 const wenDefillama = /.*(wh?en) .*(defillama|llama).*/i
 const wenVote = /.*(wh?en) .*(vote|voting).*/i
@@ -432,9 +436,17 @@ async function handleScamMessage(message) {
   const isScamUser = userDisplayName.test(message.member.displayName);
   const isScamContent = scamPatterns.some(pattern => pattern.test(message.content));
   const hasMentions = message.mentions.everyone;
-  const hasExternalUrl = urlPattern.test(message.content);
+  const hasExternalUrl = urlPattern.test(message.content) || internalUrl.test(message.content);
+  const userRoles = message.member.roles.cache;
 
-  if (isScamContent) {
+  // Check if the user has only the base role
+  const hasOnlyBaseRole = userRoles.size === 2 && userRoles.has(BASE_ROLE_ID);
+
+  const roleNames = userRoles
+    .filter(role => role.name !== '@everyone')
+    .map(role => role.name);
+
+  if ((isScamContent || hasMentions) && hasExternalUrl && hasOnlyBaseRole) {
     try {
       await message.delete();
       console.log(`Deleted scam message from ${message.author.tag}. `);
@@ -444,10 +456,9 @@ async function handleScamMessage(message) {
       const username = message.author.username;
       const userId = message.author.id;
       const accountCreatedAt = message.author.createdAt.toDateString();
-      const roles = message.member.roles.cache
-        .filter(role => role.name !== '@everyone')
-        .map(role => role.name)
-        .join(', ');
+      
+      const roles = roleNames.join(', ');
+
       const originalMessage = message.content.trim();
   
       // Create an embed with the provided information
@@ -465,7 +476,7 @@ async function handleScamMessage(message) {
           .setColor('#FF0000'); // Set the color of the embed
   
         const channel = await client.channels.fetch(SCAM_CHANNEL_ID);
-        if (channel) {
+        if (channel && hasOnlyBaseRole) {
           await channel.send({
             embeds: [warningMessageEmbed],
             allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
