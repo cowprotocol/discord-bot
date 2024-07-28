@@ -34,11 +34,10 @@ const LARGE_SWAP_AMOUNT = 10000
 const LARGE_STAKE_AMOUNT = 21000
 const web3 = new Web3(WEB3_PROVIDER);
 
-const ENVIRONMENT = process.env.ENVIRONMENT;
-const CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_CHANNEL_ID : process.env.TEST_CHANNEL_ID;
-const SCAM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SCAM_CHANNEL_ID : process.env.TEST_SCAM_CHANNEL_ID;
-const GM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_GM_CHANNEL_ID : process.env.TEST_GM_CHANNEL_ID;
-const SUPPORT_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SUPPORT_TICKET_CHANNEL_ID : process.env.TEST_SUPPORT_TICKET_CHANNEL_ID;
+const SCAM_CHANNEL_ID = process.env.SCAM_CHANNEL_ID;
+const GM_CHANNEL_ID = process.env.GM_CHANNEL_ID;
+const SUPPORT_CHANNEL_ID = process.env.SUPPORT_TICKET_CHANNEL_ID;
+const CHANNEL_ID = process.env.BOT_CHANNEL_ID;
 
 //highest block we've checked so far
 let highestCheckedBlock = 0; 
