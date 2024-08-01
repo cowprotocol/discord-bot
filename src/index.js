@@ -233,7 +233,6 @@ const wenNetwork = /.*wh?en\s+(optimism|op|binance|bnb|gnosis|avax|avalanche|bas
 const meaningOfLife = /.*meaning of life.*/i
 const contractAddress = /.*(contract|token) .*address.*/i
 const totalSupply = /.*(total|max|maximum|token|seed) supply.*/i
-const howToSwap = /\b(how\s+(?:to\s+)?(?:swap|bridge)|(?:how\s+(?:to\s+)?)?(?:convert|change|bridge|swap)\s+(?:WBTC\s+to\s+BTC|BTC\s+to\s+WBTC))\b/i;
 const wenDuneAnalytics = /.*(wh?en|where).*(dune|analytics).*/i
 const wenDude = /.*(wh?en|where).*(dude).*/i
 const wenStake = /.*(wh?en) .*(stake|staking).*/i
@@ -388,17 +387,13 @@ client.on('messageCreate', async (message) => {
       )
     } else if (wenVote.test(message.content)) {
       await message.reply(
-        'SEED Stakers will eventually be able to vote on their favorite fillers. For more details, check out <https://garden.finance/blogs/market-making-and-staking/>',
+        'Garden Snapshot can be found at <https://snapshot.org/#/gardenfinance.eth>. SEED stakers will eventually be able to vote on their favorite fillers. For more details, check out <https://garden.finance/blogs/market-making-and-staking/>',
       )
     } else if (contractAddress.test(message.content)) {
       await message.channel.send({ embeds: [ADDRESSES_EMBEDDED_MSG] })
     } else if (totalSupply.test(message.content)) {
       await message.reply(
         "SEED's total supply is 147,000,000.\n\nKeep in mind not everything will be in circulation at launch. For more info, check <https://garden.finance/blogs/wbtc-garden-introducing-seed/>",
-      )
-    } else if (howToSwap.test(message.content)) {
-      await message.reply(
-        "Go to <https://garden.finance/swap/> and swap today!\n\nFor more details on how to swap, check out this tutorial video\n <https://www.youtube.com/watch?v=YUaG1vo60L0>",
       )
     } else if (howToClaim.test(message.content)) {
       await message.reply(
