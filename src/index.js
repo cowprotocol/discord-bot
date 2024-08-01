@@ -34,11 +34,11 @@ const LARGE_SWAP_AMOUNT = 10000
 const LARGE_STAKE_AMOUNT = 21000
 const web3 = new Web3(WEB3_PROVIDER);
 
-const ENVIRONMENT = process.env.ENVIRONMENT;
-const CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_CHANNEL_ID : process.env.TEST_CHANNEL_ID;
-const SCAM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SCAM_CHANNEL_ID : process.env.TEST_SCAM_CHANNEL_ID;
-const GM_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_GM_CHANNEL_ID : process.env.TEST_GM_CHANNEL_ID;
-const SUPPORT_CHANNEL_ID = ENVIRONMENT === 'production' ? process.env.PROD_SUPPORT_TICKET_CHANNEL_ID : process.env.TEST_SUPPORT_TICKET_CHANNEL_ID;
+const SCAM_CHANNEL_ID = process.env.SCAM_CHANNEL_ID;
+const GM_CHANNEL_ID = process.env.GM_CHANNEL_ID;
+const SUPPORT_CHANNEL_ID = process.env.SUPPORT_TICKET_CHANNEL_ID;
+const CHANNEL_ID = process.env.BOT_CHANNEL_ID;
+const BASE_ROLE_ID = process.env.BASE_ROLE_ID;
 
 //highest block we've checked so far
 let highestCheckedBlock = 0; 
@@ -217,20 +217,22 @@ const scamPatterns = [
   /WhatsApp \+\d{1,3} \d{4,}/i,
   /how to earn|how to make money|make \$\d+k/i,
   /I\u2019ll teach \d+ people to earn/i,
+  /server representative/i,
+  /support representative/i,
 ];
 
 // auto-replies
 const urlPattern = /https?:\/\/[^\s]+/i;
+const internalUrl = /(?<!https?:\/\/)(?:www\.)?(discord\.(?:com|gg)|discord(?:app)?\.com)(\S*)/i // look for discord.gg or discord.com without the https:// or http://
 const howToClaim = /.*(how) (.*)(claim|airdrop).*/i
 const wenDefillama = /.*(wh?en) .*(defillama|llama).*/i
 const wenVote = /.*(wh?en) .*(vote|voting).*/i
 const wenMoon = /.*(wh?en|where).*mo+n.*/i
 const wenLambo = /.*(wh?en|where).*lambo.*/i
-const wenNetwork = /.*wh?en\s+(optimism|op|binance|bnb|gnosis|avax|avalanche|base).*/i
+const wenNetwork = /.*wh?en\s+(optimism|op|binance|bnb|gnosis|avax|avalanche|base|sol|solana|monad).*/i
 const meaningOfLife = /.*meaning of life.*/i
 const contractAddress = /.*(contract|token) .*address.*/i
 const totalSupply = /.*(total|max|maximum|token|seed) supply.*/i
-const howToSwap = /.*(how (to )?swap|WBTC to BTC|BTC to WBTC).*/i
 const wenDuneAnalytics = /.*(wh?en|where).*(dune|analytics).*/i
 const wenDude = /.*(wh?en|where).*(dude).*/i
 const wenStake = /.*(wh?en) .*(stake|staking).*/i
@@ -385,17 +387,13 @@ client.on('messageCreate', async (message) => {
       )
     } else if (wenVote.test(message.content)) {
       await message.reply(
-        'SEED Stakers will eventually be able to vote on their favorite fillers. For more details, check out <https://garden.finance/blogs/market-making-and-staking/>',
+        'Garden Snapshot can be found at <https://snapshot.org/#/gardenfinance.eth>. SEED stakers will eventually be able to vote on their favorite fillers. For more details, check out <https://garden.finance/blogs/market-making-and-staking/>',
       )
     } else if (contractAddress.test(message.content)) {
       await message.channel.send({ embeds: [ADDRESSES_EMBEDDED_MSG] })
     } else if (totalSupply.test(message.content)) {
       await message.reply(
         "SEED's total supply is 147,000,000.\n\nKeep in mind not everything will be in circulation at launch. For more info, check <https://garden.finance/blogs/wbtc-garden-introducing-seed/>",
-      )
-    } else if (howToSwap.test(message.content)) {
-      await message.reply(
-        "Go to <https://garden.finance/swap/> and swap today!\n\nFor more details on how to swap, check out this tutorial video\n <https://www.youtube.com/watch?v=YUaG1vo60L0>",
       )
     } else if (howToClaim.test(message.content)) {
       await message.reply(
@@ -433,9 +431,17 @@ async function handleScamMessage(message) {
   const isScamUser = userDisplayName.test(message.member.displayName);
   const isScamContent = scamPatterns.some(pattern => pattern.test(message.content));
   const hasMentions = message.mentions.everyone;
-  const hasExternalUrl = urlPattern.test(message.content);
+  const hasExternalUrl = urlPattern.test(message.content) || internalUrl.test(message.content);
+  const userRoles = message.member.roles.cache;
 
-  if (isScamContent) {
+  // Check if the user has only the base role
+  const hasOnlyBaseRole = userRoles.size === 2 && userRoles.has(BASE_ROLE_ID);
+
+  const roleNames = userRoles
+    .filter(role => role.name !== '@everyone')
+    .map(role => role.name);
+
+  if ((isScamContent || hasMentions) && (hasExternalUrl || hasMentions) && hasOnlyBaseRole) {
     try {
       await message.delete();
       console.log(`Deleted scam message from ${message.author.tag}. `);
@@ -445,10 +451,9 @@ async function handleScamMessage(message) {
       const username = message.author.username;
       const userId = message.author.id;
       const accountCreatedAt = message.author.createdAt.toDateString();
-      const roles = message.member.roles.cache
-        .filter(role => role.name !== '@everyone')
-        .map(role => role.name)
-        .join(', ');
+      
+      const roles = roleNames.join(', ');
+
       const originalMessage = message.content.trim();
   
       // Create an embed with the provided information
@@ -466,7 +471,7 @@ async function handleScamMessage(message) {
           .setColor('#FF0000'); // Set the color of the embed
   
         const channel = await client.channels.fetch(SCAM_CHANNEL_ID);
-        if (channel) {
+        if (channel && hasOnlyBaseRole) {
           await channel.send({
             embeds: [warningMessageEmbed],
             allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
