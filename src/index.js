@@ -441,7 +441,7 @@ async function handleScamMessage(message) {
     .filter(role => role.name !== '@everyone')
     .map(role => role.name);
 
-  if ((isScamContent || hasMentions) && hasExternalUrl && hasOnlyBaseRole) {
+  if ((isScamContent || hasMentions) && (hasExternalUrl || hasMentions) && hasOnlyBaseRole) {
     try {
       await message.delete();
       console.log(`Deleted scam message from ${message.author.tag}. `);
