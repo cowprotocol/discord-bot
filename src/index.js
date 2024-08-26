@@ -31,7 +31,7 @@ const UNISWAP_POOL_ABI = [
   }
 ];
 const LARGE_SWAP_AMOUNT = 10000
-const LARGE_STAKE_AMOUNT = 21000
+const LARGE_STAKE_AMOUNT = 20999
 const web3 = new Web3(WEB3_PROVIDER);
 
 const SCAM_CHANNEL_ID = process.env.SCAM_CHANNEL_ID;
@@ -40,10 +40,12 @@ const SUPPORT_CHANNEL_ID = process.env.SUPPORT_TICKET_CHANNEL_ID;
 const CHANNEL_ID = process.env.BOT_CHANNEL_ID;
 const BASE_ROLE_ID = process.env.BASE_ROLE_ID;
 
-//highest block we've checked so far
+// highest block we've checked so far
 let highestCheckedBlock = 0; 
-//Set to store processed transaction hashes
+// Set to store processed transaction hashes
 const processedTransactions = new Set();
+// a dictionary of recent messages to detect spam
+const recentMessages = new Map();
 
 client.login(process.env.BOT_TOKEN).catch(err => {
   console.error('Failed to login:', err);
@@ -205,7 +207,10 @@ const noHello = /^(hi+|hey|hello|h?ola)!?\s*$/i
 const secretChannel = /^!join$/
 
 // Regex patterns for detecting spam
-const userDisplayName = /announcement/i;
+const userDisplayName = [
+  /announcement/i,
+  /📢/,
+];
 const scamPatterns = [
   /airdrop is live now/i,
   /collaborated with opensea/i,
@@ -219,6 +224,10 @@ const scamPatterns = [
   /I\u2019ll teach \d+ people to earn/i,
   /server representative/i,
   /support representative/i,
+  /JUICE AIR-DROP/i,
+  /live NOW/i,
+  /juice-foundation.org/i,
+  /Get your free tokens/i
 ];
 
 // auto-replies
@@ -426,14 +435,33 @@ client.on('messageCreate', async (message) => {
   }
 })
 
+function isTargetedScamMessage(message, hasOnlyBaseRole, hasMentions, hasExternalUrl)
+{
+  const hasDmRequest = /\b(?:dm|message)\s+me\b/i.test(message.content);
+
+  return hasOnlyBaseRole && hasMentions && (hasExternalUrl || hasDmRequest);
+}
+
 // Function to check for and handle scam messages
 async function handleScamMessage(message) {
-  const isScamUser = userDisplayName.test(message.member.displayName);
+
+  const { author, content, channel } = message;
+  const key = `${author.id}:${content}`;
+
+    // Check if all mentioned users have only the base role
+  const mentionedUsersHaveOnlyBaseRole = message.mentions.users.size > 0 
+  ? await Promise.all(
+      message.mentions.users.map(async (user) => {
+        const member = await message.guild.members.fetch(user);
+        return member.roles.cache.size === 2 && member.roles.cache.has(BASE_ROLE_ID);
+      })
+    ).then(results => results.every(Boolean))
+  : false;
+  const isScamUser = userDisplayName.some(pattern => pattern.test(message.content));
   const isScamContent = scamPatterns.some(pattern => pattern.test(message.content));
-  const hasMentions = message.mentions.everyone;
+  const hasMentions = (message.mentions.users.size > 0 && mentionedUsersHaveOnlyBaseRole) || message.mentions.everyone;
   const hasExternalUrl = urlPattern.test(message.content) || internalUrl.test(message.content);
   const userRoles = message.member.roles.cache;
-
   // Check if the user has only the base role
   const hasOnlyBaseRole = userRoles.size === 2 && userRoles.has(BASE_ROLE_ID);
 
@@ -441,49 +469,92 @@ async function handleScamMessage(message) {
     .filter(role => role.name !== '@everyone')
     .map(role => role.name);
 
-  if ((isScamContent || hasMentions) && (hasExternalUrl || hasMentions) && hasOnlyBaseRole) {
-    try {
-      await message.delete();
-      console.log(`Deleted scam message from ${message.author.tag}. `);
-
-      const joinDate = message.member.joinedAt.toDateString();
-      const displayName = message.member.displayName;
-      const username = message.author.username;
-      const userId = message.author.id;
-      const accountCreatedAt = message.author.createdAt.toDateString();
       
-      const roles = roleNames.join(', ');
+  if (!recentMessages.has(key)) {
+    recentMessages.set(key, new Set());
+  }
 
-      const originalMessage = message.content.trim();
+  const channels = recentMessages.get(key);
+  channels.add(channel.id);
+
+  // If the same message appears in more than 2 channels, quarantine it
+  if (channels.size > 2 && hasOnlyBaseRole) {
+    await quarantineMessage(message,channels);
+    return;
+  }
+  setTimeout(() => {
+      channels.delete(channel.id);
+      if (channels.size === 0) {
+          recentMessages.delete(key);
+      }
+  }, 3600000); // 1 hour in milliseconds
+
+  const isTargetedScam = isTargetedScamMessage(message, hasOnlyBaseRole, hasMentions, 
+    hasExternalUrl);
+
+  if (((isScamContent || (hasExternalUrl && hasMentions)) && hasOnlyBaseRole) || isTargetedScam || isScamUser) {
+    await quarantineMessage(message, new Set([channel.id]));
+  }
+}
+
+async function quarantineMessage(message, channelIds) {
+  try {
+      const { guild, author, content, member } = message;
+      
+      // Delete all instances of the message
+      const deletionPromises = Array.from(channelIds).map(async (channelId) => {
+          const channel = await guild.channels.fetch(channelId);
+          const messages = await channel.messages.fetch({ limit: 100 });
+          const userMessages = messages.filter(m => m.author.id === author.id && m.content === content);
+          return Promise.all(userMessages.map(m => m.delete()));
+      });
+      
+      await Promise.all(deletionPromises);
+      
+      console.log(`Quarantined message from ${author.tag} in ${channelIds.size} channel(s).`);
+
+      const joinDate = member.joinedAt.toDateString();
+      const displayName = member.displayName;
+      const username = author.username;
+      const userId = author.id;
+      const accountCreatedAt = author.createdAt.toDateString();
+      
+      const roles = member.roles.cache
+          .filter(role => role.name !== '@everyone')
+          .map(role => role.name)
+          .join(', ');
+
+      const originalMessage = content.trim();
   
       // Create an embed with the provided information
-      const warningMessageEmbed = new EmbedBuilder ()
-          .setTitle('🚨 Potential scam/spam detected')
+      const warningMessageEmbed = new EmbedBuilder()
+          .setTitle('🚨 Suspicious Activity Detected')
           .setDescription(`Planting a 🌱 instead.`)
           .addFields(
               { name: 'Account Created', value: accountCreatedAt, inline: true },
-              { name: 'Joined Garden Discord', value: joinDate, inline: true },
+              { name: 'Joined Server', value: joinDate, inline: true },
               { name: 'Display Name', value: displayName, inline: true },
               { name: 'Username', value: `[${username}](https://discord.com/users/${userId})`, inline: true },
-              { name: 'Roles', value: roles, inline: true },
-              { name: 'Original Message (click to expand)', value: `||${originalMessage}||` }
+              { name: 'Roles', value: roles || 'None', inline: true },
+              { name: 'Spam Occurrences', value: channelIds.size.toString(), inline: true },
+              { name: 'Removed Message (click to expand)', value: `||${originalMessage}||` }
           )
-          .setColor('#FF0000'); // Set the color of the embed
+          .setColor('#FF0000');
   
-        const channel = await client.channels.fetch(SCAM_CHANNEL_ID);
-        if (channel && hasOnlyBaseRole) {
-          await channel.send({
-            embeds: [warningMessageEmbed],
-            allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
+      const reportChannel = await guild.channels.fetch(SCAM_CHANNEL_ID);
+      if (reportChannel) {
+          await reportChannel.send({
+              embeds: [warningMessageEmbed],
+              allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
           });
-        } else {
-          console.error('Channel not found');
-        }
-    } catch (error) {
-      console.error('Failed to delete message or send warning:', error);
-    }
+      } else {
+          console.error('Report channel not found');
+      }
+  } catch (error) {
+      console.error('Failed to quarantine message or send warning:', error);
   }
 }
+
 
 // Helper functions 
 
