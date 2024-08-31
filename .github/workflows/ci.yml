@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - development
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -54,7 +54,7 @@ jobs:
 
   deploy-prod:
     needs: build
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -72,7 +72,7 @@ jobs:
       run: |
         ssh ${{ secrets.USERNAME }}@${{ secrets.PROD_HOST }} << EOF
           cd /home/ubuntu/garden-discord-bot
-          git pull origin master
+          git pull origin main
           /home/ubuntu/bin/garden_docker_kill.sh
           /home/ubuntu/bin/garden_docker_start.sh
         EOF
