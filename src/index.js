@@ -290,7 +290,9 @@ const workingOnItGifs = [
 ]
 
 const wenDudeGifs = [
-  'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGl6NTdwemdzNDM0eDVha3I1eXFraWU2ZXVreXQ1MmJlY2Q3MHc0ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J6JDizWgG3bX704JEU/giphy.webphttps://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcWZnaWkyOTQ2aDE3ZWgzejB1bnFhM3JrZGFxdWZtNXpwbmljbDljaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lnDvZtsnWfnnX4T0KA/giphy-downsized-large.gif',
+  'https://media1.tenor.com/m/FC_My5JT638AAAAC/the-big-lebowski-the-dude.gif',
+  'https://media1.tenor.com/m/GscrdOO29OUAAAAd/the-dude-big-lebowski.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcWZnaWkyOTQ2aDE3ZWgzejB1bnFhM3JrZGFxdWZtNXpwbmljbDljaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lnDvZtsnWfnnX4T0KA/giphy-downsized-large.gif',
   'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGl6NTdwemdzNDM0eDVha3I1eXFraWU2ZXVreXQ1MmJlY2Q3MHc0ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J6JDizWgG3bX704JEU/giphy-downsized-large.gif',
   'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWdpZ3U3b3pzb3RmOHB4cHpkZ2s0NDczYXdzbmZ5NGpyMmt1bjRjaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bueYrEU0GcwzTKo/giphy.gif',
   'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdTR1ZDk2ZGRjNWhidzl2djUxM3U1bG9pODV4NDhsNHFhNXVraTR4ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/hzrvwvnbgIV6E/giphy.gif',
@@ -445,7 +447,7 @@ function isTargetedScamMessage(message, hasOnlyBaseRole, hasMentions, hasExterna
 // Function to check for and handle scam messages
 async function handleScamMessage(message) {
 
-  const { author, content, channel } = message;
+  const { author, content, channel, member } = message;
   const key = `${author.id}:${content}`;
 
     // Check if all mentioned users have only the base role
@@ -457,7 +459,7 @@ async function handleScamMessage(message) {
       })
     ).then(results => results.every(Boolean))
   : false;
-  const isScamUser = userDisplayName.some(pattern => pattern.test(message.content));
+  const isScamUser = userDisplayName.some(pattern => pattern.test(member.displayName));
   const isScamContent = scamPatterns.some(pattern => pattern.test(message.content));
   const hasMentions = (message.mentions.users.size > 0 && mentionedUsersHaveOnlyBaseRole) || message.mentions.everyone;
   const hasExternalUrl = urlPattern.test(message.content) || internalUrl.test(message.content);
