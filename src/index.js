@@ -210,6 +210,7 @@ const secretChannel = /^!join$/
 const userDisplayName = [
   /announcement/i,
   /📢/,
+  /^PENDLE$/i,
 ];
 const scamPatterns = [
   /airdrop is live now/i,
@@ -408,7 +409,7 @@ client.on('messageCreate', async (message) => {
       )
     } else if (howToClaim.test(message.content)) {
       await message.reply(
-        "To claim staked SEED 🌱 rewards visit <https://garden.finance/stake/>\n\nTo claim SEED 🌱 S2 rewards, check out <https://garden.finance/leaderboard>",
+        "To claim staked SEED 🌱 rewards or season rewards, visit <https://garden.finance/stake/>\n\n",
       )
     } else if (wenDefillama.test(message.content)) {
       await message.reply(
