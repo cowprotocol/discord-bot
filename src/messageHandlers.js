@@ -1,4 +1,4 @@
-const { DMChannel, MessageType, EmbedBuilder } = require('discord.js');
+const { DMChannel, MessageType, EmbedBuilder, ChannelType, ButtonBuilder, ButtonStyle,ActionRowBuilder  } = require('discord.js');
 const cowsay = require('cowsay');
 const { 
   GM_CHANNEL_ID, SUPPORT_CHANNEL_ID, SCAM_CHANNEL_ID, BASE_ROLE_ID, CHANNEL_ID 
@@ -110,6 +110,19 @@ const wenDudeGifs = [
   'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdTR1ZDk2ZGRjNWhidzl2djUxM3U1bG9pODV4NDhsNHFhNXVraTR4ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/hzrvwvnbgIV6E/giphy.gif',
 ];
 
+const celebratoryGifs = [
+  'https://media.giphy.com/media/3o6fJ1BM7R2EBRDnxK/giphy.gif',
+  'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+  'https://media.giphy.com/media/3oz8xAFtqoOUUrsh7W/giphy.gif',
+  'https://media.giphy.com/media/YTbZzCkRQCEJa/giphy.gif',
+  'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif',
+  'https://media.giphy.com/media/x0qP0643fys3wnt4uP/giphy.gif',
+  'https://media.giphy.com/media/3o7TKrpHvISw8L2Bio/giphy.gif',
+  'https://media.giphy.com/media/xT5LMQ8rHYTDGFG07e/giphy.gif',
+  'https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif',
+  'https://media.giphy.com/media/3o6UB7MOoxIfHet9PW/giphy.gif'
+];
+
 const pickMoon = pickFromList(wenMoonGifs);
 const pickLambo = pickFromList(wenLamboGifs);
 const pickMeaningOfLife = pickFromList(meaningOfLifeGifs);
@@ -127,23 +140,22 @@ async function handleMessage(message) {
       console.log('Do not reply to bots', message.author.tag);
       return;
     }
+    if (message.type !== MessageType.Default && message.type !== MessageType.Reply) {
+      console.log('Can only interact with default messages and replies', message.type);
+      return;
+    }
     console.log(message.type);
     if (message.type !== MessageType.Default) {
       console.log('Can only interact with default messages', message.type);
       return;
     }
-    if (message.channel instanceof DMChannel) {
+    if (channel.type === ChannelType.DM) {
       message.reply(
         codeBlock(cowsay.say({ text: "I am a bot and can't reply, beep bop" })),
       );
       return;
     }
     
-    if (message.content.toLowerCase() === '/listscammers') {
-      await listSuspectedScammers(message);
-      return;
-    }
-
     await handleScamMessage(message);
 
     if (noGmAllowed.test(message.content) && message.channel.id !== GM_CHANNEL_ID) {
@@ -331,40 +343,56 @@ async function quarantineMessage(message, channelIds) {
 }
 
 async function sendThreadedReport(reportChannel, author, warningMessageEmbed) {
-  let threadId = suspiciousUserThreads.get(author.id);
-  let thread;
+  try {
+    let threadId = suspiciousUserThreads.get(author.id);
+    let thread;
 
-  if (threadId) {
-    try {
-      thread = await reportChannel.threads.fetch(threadId);
-    } catch (error) {
-      console.error(`Failed to fetch existing thread for user ${author.id}:`, error);
-      thread = null;
+    if (threadId) {
+      try {
+        thread = await reportChannel.threads.fetch(threadId);
+      } catch (error) {
+        console.error(`Failed to fetch existing thread for user ${author.id}:`, error);
+        thread = null;
+      }
     }
-  }
 
-  if (!thread) {
-    // Create a new thread if it doesn't exist
-    const threadName = `Suspicious Activity - ${author.tag}`;
-    thread = await reportChannel.threads.create({
-      name: threadName,
-      autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-      reason: 'New suspicious activity detected'
+    if (!thread) {
+      const threadName = `Suspicious Activity - ${author.tag}`;
+      try {
+        thread = await reportChannel.threads.create({
+          name: threadName,
+          autoArchiveDuration: 1440, // 1 hour in minutes
+          type: ChannelType.PublicThread, // Changed from PrivateThread to PublicThread
+          reason: 'New suspicious activity detected'
+        });
+        suspiciousUserThreads.set(author.id, thread.id);
+
+      } catch (error) {
+        console.error(`Failed to create thread for user ${author.id}:`, error);
+        // If thread creation fails, send the report to the main channel instead
+        await reportChannel.send({ embeds: [warningMessageEmbed] });
+        return;
+      }
+    }
+
+    const banButton = new ButtonBuilder()
+      .setCustomId(`ban_${author.id}`)
+      .setLabel('Ban User')
+      .setStyle(ButtonStyle.Danger);
+
+    const actionRow = new ActionRowBuilder().addComponents(banButton);
+
+    await thread.send({
+      content: `Suspicious activity detected for user ${author.tag} (${author.id})`,
+      embeds: [warningMessageEmbed],
+      components: [actionRow],
+      allowedMentions: { parse: [] }
     });
-    suspiciousUserThreads.set(author.id, thread.id);
-
-    // Send an initial message in the main channel
-    await reportChannel.send({
-      content: `New suspicious activity detected for user ${author.tag}. See thread for details.`,
-      thread: thread.id
-    });
+  } catch (error) {
+    console.error('Failed to send threaded report:', error);
+    // If all else fails, try to send the report to the main channel
+    await reportChannel.send({ embeds: [warningMessageEmbed] });
   }
-
-  // Send the warning message in the thread
-  await thread.send({
-    embeds: [warningMessageEmbed],
-    allowedMentions: { parse: [] }  // Disallow mentions so we don't spam people
-  });
 }
 
 function addSuspectedScammer(userId) {
@@ -479,15 +507,11 @@ async function handleRepeatedMentions(message) {
           const threadName = `Suspicious Activity - ${author.tag}`;
           const newThread = await reportChannel.threads.create({
             name: threadName,
-            autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+            autoArchiveDuration: 10080, // 7 days in minutes
+            type: ChannelType.PublicThread,
             reason: 'New suspicious activity detected'
           });
           suspiciousUserThreads.set(author.id, newThread.id);
-          
-          await reportChannel.send({
-            content: `New suspicious activity detected for user ${author.tag}. See thread for details.`,
-            thread: newThread.id
-          });
           
           await newThread.send(`User ${author.tag} (${author.id}) has been kicked for excessive mentions (${scammer.mentionCount}) while under suspicion. In the future this will be a ban after some testing.`);
         }
@@ -503,5 +527,6 @@ module.exports = {
   handleMessage,
   handleScamMessage,
   addSuspectedScammer,
-  quarantineMessage
+  quarantineMessage,
+  celebratoryGifs
 };
