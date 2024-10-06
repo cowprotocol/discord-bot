@@ -111,16 +111,16 @@ const wenDudeGifs = [
 ];
 
 const celebratoryGifs = [
-  'https://media.giphy.com/media/3o6fJ1BM7R2EBRDnxK/giphy.gif',
   'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
-  'https://media.giphy.com/media/3oz8xAFtqoOUUrsh7W/giphy.gif',
-  'https://media.giphy.com/media/YTbZzCkRQCEJa/giphy.gif',
-  'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif',
-  'https://media.giphy.com/media/x0qP0643fys3wnt4uP/giphy.gif',
-  'https://media.giphy.com/media/3o7TKrpHvISw8L2Bio/giphy.gif',
-  'https://media.giphy.com/media/xT5LMQ8rHYTDGFG07e/giphy.gif',
-  'https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif',
-  'https://media.giphy.com/media/3o6UB7MOoxIfHet9PW/giphy.gif'
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3hmNmJhZnM1ZjB2dHB0cGgyczBwdjk0bmNoZzk5M3RsdXlvbDY1aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/x3ijPhltY1z7EGdxGT/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmE0dGk4am9kdG04MWV6bjV1NDJjeHJ4ZGNoaHlvYjRmeHExMzlycyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/MWDLf1EIUsoNy/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGFsODljZ3Fsbmxnd2JmOTk0bnFiNTk1bHRxc3duNGdjZTM1cG5lZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/GXMuvJXWVqGiY/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWJsOHlwdDN2Z3cwemtoZTJrYW04bzJteW00ZGI0b2J4MDJxcGUwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/smTkxYsx9cQK9BNbW0/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3VmZHVhY3ZuNThzdzZreGZvdWxvejl0YnM0bmdtZWZtdjZpaWh4MSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/40M8MH9x9lDxaHA51d/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExd21ld2ptM2F0czVpeWpwcTV5ZjMwYmZyc3J3aG5wZXUyOWxnd3lpcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/k9yS4LbpiVmtG/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZGdnOTcwZ2dnOGVubTl1djY5MXMyMHQzbGJrNDNxeTBuN2NqOWZ2OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NrhcCwwbVHwpyEZSqH/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3ZodW9tYXNwbThyOGxyZG16ZXNjcHlhcWhubm1xeXhtNWcydTVubiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4LsN0YwgIsvaU/giphy.gif',
+  'https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMmg2NGJicjA3ZHA0Ym5ia2Y1MTc5ZWZvbnM5cTQxMTJvYWw1ZnlwdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8nM6YNtvjuezzD7DNh/giphy.gif'
 ];
 
 const pickMoon = pickFromList(wenMoonGifs);
