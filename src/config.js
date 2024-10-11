@@ -44,9 +44,5 @@ module.exports = {
 
   // Weather Types
   WEATHER_TYPES: ['☀️', '🌧️', '🌪️', '⛈️', '🌫️', '🌈'],
-
-  // In config.js, add these lines:
-  TARGET_TWITTER_ACCOUNTS: ['garden_finance', 'jzgulati', 'sivakoushik'], // Twitter IDs of accounts to track
-  SEEDLINGS_PER_ENGAGEMENT: 1, // Number of seedlings awarded per engagement
 };
 

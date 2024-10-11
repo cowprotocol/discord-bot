@@ -1,13 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const config = require('./config');
-const Twit = require('twit');
 
-const T = new Twit({
-  consumer_key: process.env.TWITTER_CONSUMER_KEY,
-  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-  access_token: process.env.TWITTER_ACCESS_TOKEN,
-  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-});
 
 class GardenSystem {
   constructor() {
@@ -39,13 +32,6 @@ class GardenSystem {
         id INTEGER PRIMARY KEY CHECK (id = 1),
         current_weather TEXT,
         last_change INTEGER
-      )`);
-
-      // Create twitter_links table
-      this.db.run(`CREATE TABLE IF NOT EXISTS twitter_links (
-        discord_id TEXT PRIMARY KEY,
-        twitter_id TEXT,
-        last_check INTEGER
       )`);
     });
 
@@ -171,70 +157,6 @@ class GardenSystem {
       await this.updateGarden(userId, { seedlings: garden.seedlings - 1 });
       return 'failed';
     }
-  }
-
-  async linkTwitterAccount(discordId, twitterHandle) {
-    return new Promise((resolve, reject) => {
-      T.get('users/show', { screen_name: twitterHandle }, (err, data, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          this.db.run(
-            "INSERT OR REPLACE INTO twitter_links (discord_id, twitter_id, last_check) VALUES (?, ?, ?)",
-            [discordId, data.id_str, Date.now()],
-            (err) => {
-              if (err) reject(err);
-              else resolve(data.id_str);
-            }
-          );
-        }
-      });
-    });
-  }
-
-  async checkTwitterEngagement(discordId) {
-    return new Promise((resolve, reject) => {
-      this.db.get("SELECT * FROM twitter_links WHERE discord_id = ?", [discordId], async (err, row) => {
-        if (err) {
-          reject(err);
-        } else if (!row) {
-          resolve(0); // No linked Twitter account
-        } else {
-          const now = Date.now();
-          const targetAccounts = config.TARGET_TWITTER_ACCOUNTS;
-          let engagementCount = 0;
-
-          for (let account of targetAccounts) {
-            const tweets = await this.getTweets(account, row.last_check);
-            engagementCount += await this.checkUserEngagement(row.twitter_id, tweets);
-          }
-
-          this.db.run("UPDATE twitter_links SET last_check = ? WHERE discord_id = ?", [now, discordId]);
-
-          const seedlingsEarned = engagementCount * config.SEEDLINGS_PER_ENGAGEMENT;
-          await this.addSeedlings(discordId, seedlingsEarned);
-          resolve(seedlingsEarned);
-        }
-      });
-    });
-  }
-
-  async getTweets(accountId, sinceTime) {
-    return new Promise((resolve, reject) => {
-      T.get('statuses/user_timeline', { user_id: accountId, since: new Date(sinceTime).toISOString() }, (err, data, response) => {
-        if (err) reject(err);
-        else resolve(data);
-      });
-    });
-  }
-
-  async checkUserEngagement(userId, tweets) {
-    let engagementCount = 0;
-    for (let tweet of tweets) {
-      if (tweet.entities.user_mentions.some(mention => mention.id_str === userId)) engagementCount++;
-      if (tweet.retweeted_status && tweet.retweeted_status.user.id_str === userId) engagementCount++;
-    }
-    return engagementCount;
   }
 }
 
