@@ -2,11 +2,19 @@ FROM node:alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY yarn.lock ./
+# Copy package.json and yarn.lock
+COPY package*.json yarn.lock ./
 
-RUN yarn
+# Install dependencies
+RUN apk add --no-cache --virtual .build-deps alpine-sdk python3 \
+    && yarn install --frozen-lockfile \
+    && apk del .build-deps
 
-COPY . /app
+# Copy the rest of the application
+COPY . .
 
-CMD [ "yarn", "start" ]
+# Set permissions (if needed)
+RUN chmod -R 755 .
+
+# Start the application
+CMD ["yarn", "start"]
