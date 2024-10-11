@@ -6,6 +6,9 @@ const { checkTransfers } = require('./transactionMonitor');
 const config = require('./config');
 const { handleMessage,celebratoryGifs } = require('./messageHandlers');
 const { REST, Routes } = require('discord.js');
+const gardenSystem = require('./gardenSystem');
+const weatherSystem = require('./weather');
+
 
 
 const client = new Client({
@@ -49,9 +52,14 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
   }
 })();
 
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
   setInterval(() => checkTransfers(client), config.POLL_INTERVAL);
+
+  await weatherSystem.checkAndUpdateForecast();
+  setInterval(async () => {
+    await weatherSystem.checkAndUpdateForecast();
+  }, config.WEATHER_CHANGE_INTERVAL);
 });
 
 client.on('messageCreate', handleMessage);
