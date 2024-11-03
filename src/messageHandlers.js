@@ -6,9 +6,7 @@ const {
 const { codeBlock, helloMsgReply, pickFromList, formatDuration } = require('./utils');
 const { 
   ADDRESSES_EMBEDDED_MSG, 
-  createWarningMessageEmbed, 
-  createCommunityStatsEmbed, 
-  createLeaderboardEmbed 
+  createWarningMessageEmbed
 } = require('./embeds');
 
 const suspectedScammers = new Map();

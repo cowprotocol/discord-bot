@@ -36,13 +36,5 @@ module.exports = {
       "type": "function"
     }
   ],
-
-  // Garden System Configuration
-  GARDEN_DB_PATH: process.env.GARDEN_DB_PATH || './garden.db',
-  MAX_GARDEN_SIZE: 50,
-  WEATHER_CHANGE_INTERVAL: 86400000, // 24 hours in milliseconds
-
-  // Weather Types
-  WEATHER_TYPES: ['☀️', '🌧️', '🌪️', '⛈️', '🌫️', '🌈'],
 };
 
