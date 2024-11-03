@@ -24,7 +24,8 @@ class GardenSystem {
       this.db.run(`CREATE TABLE IF NOT EXISTS user_activity (
         user_id TEXT PRIMARY KEY,
         last_scavenge INTEGER,
-        next_scavenge_time INTEGER
+        next_scavenge_time INTEGER,
+        last_watered INTEGER
       )`);
 
       // Create weather table

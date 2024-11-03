@@ -45,6 +45,10 @@ module.exports = {
     .setDescription('Interact with your garden')
     .addSubcommand(subcommand =>
       subcommand
+        .setName('water')
+        .setDescription('Water your garden'))
+    .addSubcommand(subcommand =>
+      subcommand
         .setName('view')
         .setDescription('View a cute representation of your garden'))
     .addSubcommand(subcommand =>
@@ -119,6 +123,16 @@ module.exports = {
       case 'forecast':
         await handleForecastCommand(interaction);
         break;
+      case 'water':
+          try {
+            const result = await gardenSystem.waterGarden(interaction.user.id);
+            await interaction.reply(result.message);
+          } catch (error) {
+            console.error('Error watering garden:', error);
+            await interaction.reply('An error occurred while trying to water your garden.');
+          }
+      break;
+        
     }
   },
 };
@@ -229,3 +243,57 @@ async function handleForecastCommand(interaction) {
 
   await interaction.reply({ embeds: [embed] });
 }
+
+async function waterGarden(userId) {
+  const now = Date.now();
+  
+  return new Promise((resolve, reject) => {
+    this.db.get("SELECT * FROM user_activity WHERE user_id = ?", [userId], async (err, row) => {
+      if (err) reject(err);
+
+      const lastWatered = row ? row.last_watered : 0;
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      if (row && now - lastWatered < oneDay) {
+        // Already watered today
+        resolve({ success: false, message: 'You already watered your garden today!' });
+      } else {
+        // Update watering time
+        this.db.run("INSERT OR REPLACE INTO user_activity (user_id, last_scavenge, next_scavenge_time, last_watered) VALUES (?, ?, ?, ?)", 
+          [userId, row?.last_scavenge, row?.next_scavenge_time, now]);
+
+        // Apply growth to the garden
+        const growthResult = await this.applyGrowth(userId);
+        resolve({ success: true, message: growthResult });
+      }
+    });
+  });
+}
+
+async function applyGrowth(userId) {
+  const garden = await this.getGarden(userId);
+
+  // Increase chance of plants growing
+  const baseGrowthChance = 0.8; // 80% chance to grow
+  let successfulGrowth = 0;
+  let failedGrowth = 0;
+
+  // Attempt to grow all sprouts into flowers, and flowers into trees
+  for (let i = 0; i < garden.sprouts; i++) {
+    if (Math.random() < baseGrowthChance) {
+      successfulGrowth++;
+    } else {
+      failedGrowth++;
+    }
+  }
+
+  // Update garden based on the result
+  await this.updateGarden(userId, {
+    sprouts: garden.sprouts - successfulGrowth,
+    flowers: garden.flowers + successfulGrowth
+  });
+
+  return `You successfully watered your garden! 🌿 ${successfulGrowth} sprouts grew into flowers!`;
+}
+
+
