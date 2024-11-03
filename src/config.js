@@ -11,6 +11,12 @@ module.exports = {
   SUPPORT_CHANNEL_ID: process.env.SUPPORT_TICKET_CHANNEL_ID,
   CHANNEL_ID: process.env.BOT_CHANNEL_ID,
 
+  // Excluded Channels (Add channel IDs to exclude) from message detection
+  EXCLUDED_CHANNELS: [
+    process.env.SUPPORT_TICKET_CHANNEL_ID
+    // Add more channel IDs as needed
+  ].filter(Boolean), // This removes any undefined or null values
+
   // Role IDs
   BASE_ROLE_ID: process.env.BASE_ROLE_ID,
 
