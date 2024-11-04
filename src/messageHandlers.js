@@ -134,8 +134,12 @@ async function handleMessage(message) {
   try {
     const { author, content, member, channel } = message;
 
+    // Check if channel or its parent (if it's a thread) is in exclude list
+    const isExcluded = EXCLUDED_CHANNELS.includes(channel.id) || 
+      (channel.isThread() && EXCLUDED_CHANNELS.includes(channel.parentId));
+      
     // Check if channel is in exclude list
-    if (EXCLUDED_CHANNELS.includes(channel.id)) {
+    if (isExcluded) {
       return;
     }
     
